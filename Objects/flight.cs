@@ -102,5 +102,73 @@ namespace AirlinePlanner
     {
       return this.GetId().GetHashCode();
     }
+
+    public static void DeleteAll()
+    {
+      SqlConnection conn = DB.Connection();
+      conn.Open();
+      SqlCommand cmd = new SqlCommand("DELETE FROM flights;", conn);
+      cmd.ExecuteNonQuery();
+      conn.Close();
+    }
+    public static flight Find(int id)
+    {
+      SqlConnection conn = DB.Connection();
+      conn.Open();
+
+      SqlCommand cmd = new SqlCommand("SELECT * FROM flights WHERE id = @flightId;", conn);
+      SqlParameter flightIdParameter = new SqlParameter();
+      flightIdParameter.ParameterName = "@flightId";
+      flightIdParameter.Value = id.ToString();
+      cmd.Parameters.Add(flightIdParameter);
+      SqlDataReader rdr = cmd.ExecuteReader();
+
+      int foundFlightId = 0;
+      string foundFlightName = null;
+      while (rdr.Read() )
+      {
+        foundFlightId = rdr.GetInt32(0);
+        foundFlightName = rdr.GetString(1);
+      }
+      flight foundFlight = new flight(foundFlightName, foundFlightId);
+
+      if (rdr != null)
+      {
+        rdr.Close();
+      }
+      if (conn != null)
+      {
+        conn.Close();
+      }
+      return foundFlight;
+    }
+    public void Update(string newName)
+    {
+      SqlConnection conn = DB.Connection();
+      conn.Open();
+
+      SqlCommand cmd = new SqlCommand("UPDATE flights SET name = @NewName OUTPUT INSERTED.name WHERE id = @flightId;", conn);
+
+      SqlParameter newNameParameter = new SqlParameter();
+      newNameParameter.ParameterName = "@NewName";
+      newNameParameter.Value = newName;
+      cmd.Parameters.Add(newNameParameter);
+
+      SqlParameter flightIdParameter = new SqlParameter();
+      flightIdParameter.ParameterName = "@flightId";
+      flightIdParameter.Value = this.GetId();
+      cmd.Parameters.Add(flightIdParameter);
+      SqlDataReader rdr = cmd.ExecuteReader();
+
+      while(rdr.Read())
+      {
+        this._name = rdr.GetString(0);
+      }
+
+      if(rdr != null)
+      {
+        rdr.Close();
+      }
+    }
   }
 }

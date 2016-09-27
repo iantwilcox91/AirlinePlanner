@@ -103,5 +103,74 @@ namespace AirlinePlanner
     {
       return this.GetId().GetHashCode();
     }
+    public static void DeleteAll()
+    {
+      SqlConnection conn = DB.Connection();
+      conn.Open();
+      SqlCommand cmd = new SqlCommand("DELETE FROM cities;", conn);
+      cmd.ExecuteNonQuery();
+      conn.Close();
+    }
+
+    public static city Find(int id)
+    {
+      SqlConnection conn = DB.Connection();
+      conn.Open();
+
+      SqlCommand cmd = new SqlCommand("SELECT * FROM cities WHERE id = @cityId;", conn);
+      SqlParameter cityIdParameter = new SqlParameter();
+      cityIdParameter.ParameterName = "@cityId";
+      cityIdParameter.Value = id.ToString();
+      cmd.Parameters.Add(cityIdParameter);
+      SqlDataReader rdr = cmd.ExecuteReader();
+
+      int foundCityId = 0;
+      string foundCityName = null;
+      while (rdr.Read() )
+      {
+        foundCityId = rdr.GetInt32(0);
+        foundCityName = rdr.GetString(1);
+      }
+      city foundCity = new city(foundCityId, foundCityName);
+
+      if (rdr != null)
+      {
+        rdr.Close();
+      }
+      if (conn != null)
+      {
+        conn.Close();
+      }
+      return foundCity;
+    }
+    public void Update(string newName)
+    {
+      SqlConnection conn = DB.Connection();
+      conn.Open();
+
+      SqlCommand cmd = new SqlCommand("UPDATE cities SET name = @NewName OUTPUT INSERTED.name WHERE id = @cityId;", conn);
+
+      SqlParameter newNameParameter = new SqlParameter();
+      newNameParameter.ParameterName = "@NewName";
+      newNameParameter.Value = newName;
+      cmd.Parameters.Add(newNameParameter);
+
+      SqlParameter cityIdParameter = new SqlParameter();
+      cityIdParameter.ParameterName = "@cityId";
+      cityIdParameter.Value = this.GetId();
+      cmd.Parameters.Add(cityIdParameter);
+      SqlDataReader rdr = cmd.ExecuteReader();
+
+      while(rdr.Read())
+      {
+        this._name = rdr.GetString(0);
+      }
+      
+
+      if(rdr != null)
+      {
+        rdr.Close();
+      }
+    }
   }
 }
